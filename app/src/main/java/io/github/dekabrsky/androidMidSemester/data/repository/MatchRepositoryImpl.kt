@@ -14,11 +14,11 @@ class MatchRepositoryImpl(
     private val cache: MatchesMemoryCache,
 ) : MatchRepository {
 
-    override suspend fun matchesOn(date: LocalDate): List<Match> =
-        cache.getOrLoad(date) {
-            Log.d(TAG, "Кэш-промах для $date — запрос в сеть (${remote::class.simpleName})")
-            remote.matchesOn(date)
-        }.also { Log.d(TAG, "Матчи на $date: ${it.size} шт.") }
+    override suspend fun matchesOn(date: LocalDate, teamIds: Set<Long>): List<Match> =
+        cache.getOrLoad(date, teamIds) {
+            Log.d(TAG, "Кэш-промах для $date, команды $teamIds — запрос в сеть (${remote::class.simpleName})")
+            remote.matchesOn(date, teamIds)
+        }.also { Log.d(TAG, "Матчи на $date, команды $teamIds: ${it.size} шт.") }
 
     override suspend fun match(id: Long): Match = remote.match(id)
 }

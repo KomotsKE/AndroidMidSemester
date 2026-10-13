@@ -28,7 +28,7 @@ class EspnMatchesDataSource(
     private val league: String = ESPN_DEFAULT_LEAGUE,
 ) : MatchesRemoteDataSource {
 
-    override suspend fun matchesOn(date: LocalDate): List<Match> = coroutineScope {
+    override suspend fun matchesOn(date: LocalDate, teamIds: Set<Long>): List<Match> = coroutineScope {
         val dateStr = date.format(EspnDateFormatter)
         val leaguesToQuery = if (league == ESPN_DEFAULT_LEAGUE) TOP_LEAGUES else listOf(league)
 

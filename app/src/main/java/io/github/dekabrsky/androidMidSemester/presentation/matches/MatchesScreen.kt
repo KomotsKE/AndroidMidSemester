@@ -17,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,9 +41,11 @@ private val TITLE_DATE_FORMAT =
 @Composable
 fun MatchesScreen(
     onMatchClick: (Match) -> Unit,
+    onTeamsClick: () -> Unit,
     viewModel: MatchesViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val selectedTeamIds by viewModel.selectedTeamIds.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -50,6 +53,8 @@ fun MatchesScreen(
                 state = state,
                 onPreviousDay = viewModel::previousDay,
                 onNextDay = viewModel::nextDay,
+                selectedTeamsCount = selectedTeamIds.size,
+                onTeamsClick = onTeamsClick,
             )
         },
     ) { innerPadding ->
@@ -60,7 +65,10 @@ fun MatchesScreen(
         ) {
             when (val current = state) {
                 MatchesUiState.Loading -> LoadingState()
-                is MatchesUiState.Error -> ErrorState(message = current.message)
+                is MatchesUiState.Error -> ErrorState(
+                    message = current.message,
+                    onRetry = viewModel::retry,
+                )
                 is MatchesUiState.Content -> {
                     if (current.matches.isEmpty()) {
                         Box(
@@ -73,13 +81,21 @@ fun MatchesScreen(
                                 modifier = Modifier.padding(16.dp),
                             ) {
                                 Text(
-                                    text = "На выбранную дату матчей нет",
+                                    text = if (selectedTeamIds.isEmpty()) {
+                                        "На выбранную дату матчей нет"
+                                    } else {
+                                        "У выбранных команд на эту дату матчей нет"
+                                    },
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center,
                                 )
                                 Text(
-                                    text = "Попробуйте выбрать другой день",
+                                    text = if (selectedTeamIds.isEmpty()) {
+                                        "Попробуйте выбрать другой день"
+                                    } else {
+                                        "Попробуйте выбрать другой день или другие команды"
+                                    },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.outline,
                                     textAlign = TextAlign.Center,
@@ -108,34 +124,50 @@ private fun MatchesTopBar(
     state: MatchesUiState,
     onPreviousDay: () -> Unit,
     onNextDay: () -> Unit,
+    selectedTeamsCount: Int,
+    onTeamsClick: () -> Unit,
 ) {
     val date = (state as? MatchesUiState.Content)?.date
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.statusBars)
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        IconButton(onClick = onPreviousDay) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_left),
-                contentDescription = "Предыдущий день",
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onPreviousDay) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_left),
+                    contentDescription = "Предыдущий день",
+                )
+            }
+            Text(
+                text = date?.format(TITLE_DATE_FORMAT) ?: "",
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+            IconButton(onClick = onNextDay) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_right),
+                    contentDescription = "Следующий день",
+                )
+            }
         }
-        Text(
-            text = date?.format(TITLE_DATE_FORMAT) ?: "",
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        IconButton(onClick = onNextDay) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrow_right),
-                contentDescription = "Следующий день",
+        TextButton(onClick = onTeamsClick) {
+            Text(
+                text = if (selectedTeamsCount == 0) {
+                    "Команды: все"
+                } else {
+                    "Команды: выбрано $selectedTeamsCount"
+                },
             )
         }
     }

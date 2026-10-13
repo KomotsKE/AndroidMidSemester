@@ -7,15 +7,19 @@ import java.time.LocalDate
 
 class MatchesMemoryCache {
 
+    private data class Key(val date: LocalDate, val teamIds: Set<Long>)
+
     private val mutex = Mutex()
-    private val matchesByDate = mutableMapOf<LocalDate, List<Match>>()
+    private val matches = mutableMapOf<Key, List<Match>>()
 
     suspend fun getOrLoad(
         date: LocalDate,
+        teamIds: Set<Long>,
         load: suspend () -> List<Match>,
     ): List<Match> = mutex.withLock {
-        matchesByDate[date] ?: load().also { matchesByDate[date] = it }
+        val key = Key(date, teamIds)
+        matches[key] ?: load().also { matches[key] = it }
     }
 
-    suspend fun clear() = mutex.withLock { matchesByDate.clear() }
+    suspend fun clear() = mutex.withLock { matches.clear() }
 }
