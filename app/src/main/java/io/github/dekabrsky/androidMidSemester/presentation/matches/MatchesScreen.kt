@@ -1,6 +1,8 @@
 package io.github.dekabrsky.androidMidSemester.presentation.matches
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,12 +61,41 @@ fun MatchesScreen(
             when (val current = state) {
                 MatchesUiState.Loading -> LoadingState()
                 is MatchesUiState.Error -> ErrorState(message = current.message)
-                is MatchesUiState.Content -> LazyColumn {
-                    items(current.matches, key = { it.id }) { match ->
-                        MatchListItem(
-                            match = match,
-                            onClick = onMatchClick,
-                        )
+                is MatchesUiState.Content -> {
+                    if (current.matches.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(16.dp),
+                            ) {
+                                Text(
+                                    text = "На выбранную дату матчей нет",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                )
+                                Text(
+                                    text = "Попробуйте выбрать другой день",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                )
+                            }
+                        }
+                    } else {
+                        LazyColumn {
+                            items(current.matches, key = { it.id }) { match ->
+                                MatchListItem(
+                                    match = match,
+                                    onClick = onMatchClick,
+                                )
+                            }
+                        }
                     }
                 }
             }
